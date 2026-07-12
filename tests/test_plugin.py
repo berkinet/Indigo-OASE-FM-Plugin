@@ -121,7 +121,10 @@ class PluginLogicTests(unittest.TestCase):
         original_sleep = plugin_module.time.sleep
         plugin_module.time.sleep = Mock()
         try:
-            result = self.plugin._controller_call(lambda active: active)
+            result = plugin_module.Plugin._controller_call(
+                self.plugin,
+                lambda active: active,
+            )
         finally:
             plugin_module.time.sleep = original_sleep
 
@@ -134,7 +137,10 @@ class PluginLogicTests(unittest.TestCase):
         )
 
         with self.assertRaises(plugin_module.OaseError):
-            self.plugin._controller_call(lambda active: active)
+            plugin_module.Plugin._controller_call(
+                self.plugin,
+                lambda active: active,
+            )
 
         self.plugin._get_controller.assert_called_once_with()
 
