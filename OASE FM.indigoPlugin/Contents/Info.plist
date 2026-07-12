@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>OASE FM</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.berkinet.indigoplugin.oase-fm</string>
+    <key>CFBundleName</key>
+    <string>OASE FM</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>https://github.com/berkinet/Indigo-OASE-FM-Plugin</string>
+        </dict>
+    </array>
+    <key>CFBundleVersion</key>
+    <string>0.1.0</string>
+    <key>PluginVersion</key>
+    <string>0.1.0</string>
+    <key>ServerApiVersion</key>
+    <string>3.8</string>
+</dict>
+</plist>

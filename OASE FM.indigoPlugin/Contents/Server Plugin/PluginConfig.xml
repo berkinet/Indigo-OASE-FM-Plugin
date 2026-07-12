@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<PluginConfig>
+    <SupportURL>https://github.com/berkinet/Indigo-OASE-FM-Plugin</SupportURL>
+    <Field id="deviceIp" type="textfield">
+        <Label>OASE IP Address:</Label>
+        <Description>IP address of the OASE FM-Master controller</Description>
+    </Field>
+    <Field id="localIp" type="textfield">
+        <Label>Local IP Address:</Label>
+        <Description>Indigo server address reachable by the OASE controller</Description>
+    </Field>
+    <Field id="password" type="textfield" secure="true">
+        <Label>OASE Password:</Label>
+        <Description>App password used to authenticate with the controller</Description>
+    </Field>
+    <Field id="pollInterval" type="textfield" defaultValue="10">
+        <Label>Polling Interval:</Label>
+        <Description>Seconds between complete status updates (5-3600)</Description>
+    </Field>
+</PluginConfig>

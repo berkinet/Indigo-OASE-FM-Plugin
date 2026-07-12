@@ -1,22 +1,90 @@
 # OASE FM Plugin for Indigo
 
-An Indigo plugin for local control of the OASE InScenio FM-Master EGC and
-attached EGC devices.
+An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
+and one attached EGC device.
 
-This repository will build on the reusable
-[`oase-fm`](https://github.com/berkinet/oase-fm) Python protocol and controller
-implementation. The initial plugin structure and Indigo integration are the
-next development step.
+The plugin uses the reusable
+[`oase-fm`](https://github.com/berkinet/oase-fm) Python package for the OASE
+UDP/TLS protocol, outlet control, EGC discovery, and RDM communication.
 
-## Planned capabilities
+## Requirements
 
-- Discover and connect to an FM-Master EGC on the local network
-- Represent FM-Master outlets and the dimmer as Indigo devices
-- Represent an attached EGC device and its power level
-- Read current state and apply changes through the shared `oase_fm` module
-- Keep controller passwords in Indigo configuration rather than source code
+- Indigo 2025.2 or newer
+- Indigo Plugin API 3.8 / Python 3.13+
+- An OASE FM-Master EGC reachable from the Indigo server
+- The OASE app password
 
-## Status
+Indigo automatically installs the pinned `oase-fm` and `cryptography`
+dependencies into the plugin's private `Contents/Packages` directory.
 
-Repository initialized. Plugin implementation has not started yet.
+## Installation
 
+Download or clone this repository, then double-click `OASE FM.indigoPlugin`.
+Indigo will install the bundle and its Python requirements.
+
+Configure the plugin with:
+
+- **OASE IP Address** — address of the FM-Master controller
+- **Local IP Address** — Indigo server address reachable by the controller for
+  its TLS callback
+- **OASE Password** — stored by Indigo and concealed in the configuration UI
+- **Polling Interval** — complete status refresh interval, default 10 seconds
+
+## Devices
+
+Create one of three native Indigo device types:
+
+| Plugin device type | Indigo type | Assignment |
+| --- | --- | --- |
+| Switched socket | Relay | Select physical socket 1, 2, or 4 |
+| Dimmable socket | Dimmer | Physical socket 3 |
+| EGC device | Dimmer | Single attached EGC, discovered automatically |
+
+Duplicate physical assignments are rejected during device configuration.
+
+The OASE protocol numbers its three ordinary channels before its dimmer
+channel. The plugin translates those internal selectors to the FM-Master's
+physical socket labels: physical sockets 1, 2, and 4 are switched, while
+physical socket 3 is dimmable.
+
+## Behavior
+
+- Relay and dimmer actions are sent immediately to the FM-Master.
+- A full status refresh follows each Indigo-issued state change.
+- The polling thread requests complete status rather than querying an
+  individual Indigo device.
+- Polling reflects changes made by the OASE app or other OASE clients in the
+  Indigo UI.
+- FM-Master outlet updates remain available if a separate EGC query fails.
+- Connections are reused and automatically reset after communication errors.
+
+## Development
+
+Run the tests from the repository root:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Validate the bundle metadata and XML on macOS:
+
+```bash
+plutil -lint "OASE FM.indigoPlugin/Contents/Info.plist"
+xmllint --noout "OASE FM.indigoPlugin/Contents/Server Plugin/Devices.xml"
+xmllint --noout "OASE FM.indigoPlugin/Contents/Server Plugin/PluginConfig.xml"
+```
+
+## Current limitations
+
+- One FM-Master is configured per plugin instance.
+- One attached EGC device is selected automatically. UID selection can be
+  added later if multi-EGC installations need it.
+- External state changes are detected by polling; unsolicited OASE broadcast
+  support has not yet been identified.
+
+## Acknowledgement
+
+The underlying OASE protocol work acknowledges
+[mr-suw/ioBroker.oasecontrol](https://github.com/mr-suw/ioBroker.oasecontrol),
+whose MIT-licensed implementation supplied the practical foundation for the
+FM-Master connection and socket-control path.
