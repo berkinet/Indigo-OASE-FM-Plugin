@@ -37,6 +37,18 @@ def egc_percent_to_raw(percent: int) -> int:
     return percent * 255 // 100
 
 
+def dimmer_state_updates(on: bool, brightness: int) -> list[dict[str, object]]:
+    """Build Indigo updates with authoritative on/off state applied last.
+
+    Indigo may infer that a dimmer is on when a nonzero brightness is written.
+    Writing onOffState last preserves a remembered level while the device is off.
+    """
+    return [
+        {"key": "brightnessLevel", "value": brightness},
+        {"key": "onOffState", "value": on},
+    ]
+
+
 def map_fm_state(state: object) -> FmState:
     """Translate protocol channel names to the physical socket numbering."""
     return FmState(

@@ -10,6 +10,7 @@ from oase_fm import OaseController, OaseError
 
 from oase_plugin import (
     SWITCHED_SOCKET_TO_PROTOCOL_OUTLET,
+    dimmer_state_updates,
     dimmer_percent_to_raw,
     egc_percent_to_raw,
     map_fm_state,
@@ -277,13 +278,10 @@ class Plugin(indigo.PluginBase):
                         {"key": "onOffState", "value": fm_state.switched[physical]}
                     ]
                 elif dev.deviceTypeId == DEVICE_DIMMER:
-                    updates = [
-                        {"key": "onOffState", "value": fm_state.dimmer_on},
-                        {
-                            "key": "brightnessLevel",
-                            "value": fm_state.dimmer_brightness,
-                        },
-                    ]
+                    updates = dimmer_state_updates(
+                        fm_state.dimmer_on,
+                        fm_state.dimmer_brightness,
+                    )
                 else:
                     continue
                 dev.updateStatesOnServer(updates)
@@ -308,10 +306,7 @@ class Plugin(indigo.PluginBase):
                     self._get_egc_device(controller)
                 )
             )
-            updates = [
-                {"key": "onOffState", "value": egc_state.on},
-                {"key": "brightnessLevel", "value": egc_state.power},
-            ]
+            updates = dimmer_state_updates(egc_state.on, egc_state.power)
             for dev in egc_devices:
                 dev.updateStatesOnServer(updates)
                 dev.setErrorStateOnServer(None)

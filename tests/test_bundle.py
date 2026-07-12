@@ -25,7 +25,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.1.1")
+        self.assertEqual(info["PluginVersion"], "0.1.2")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -86,6 +86,15 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(oase_plugin.egc_percent_to_raw(0), 0)
         self.assertEqual(oase_plugin.egc_percent_to_raw(50), 127)
         self.assertEqual(oase_plugin.egc_percent_to_raw(100), 255)
+
+    def test_dimmer_on_off_state_is_applied_after_brightness(self):
+        self.assertEqual(
+            oase_plugin.dimmer_state_updates(False, 64),
+            [
+                {"key": "brightnessLevel", "value": 64},
+                {"key": "onOffState", "value": False},
+            ],
+        )
 
 
 if __name__ == "__main__":
