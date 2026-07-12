@@ -25,7 +25,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.1.2")
+        self.assertEqual(info["PluginVersion"], "0.1.3")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",

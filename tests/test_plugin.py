@@ -113,6 +113,31 @@ class PluginLogicTests(unittest.TestCase):
         controller.close.assert_called_once_with()
         self.assertIsNone(self.plugin._controller)
 
+    def test_controller_call_retries_one_timeout(self):
+        controller = Mock()
+        self.plugin._get_controller = Mock(
+            side_effect=[TimeoutError("timed out"), controller]
+        )
+        original_sleep = plugin_module.time.sleep
+        plugin_module.time.sleep = Mock()
+        try:
+            result = self.plugin._controller_call(lambda active: active)
+        finally:
+            plugin_module.time.sleep = original_sleep
+
+        self.assertIs(result, controller)
+        self.assertEqual(self.plugin._get_controller.call_count, 2)
+
+    def test_controller_call_does_not_retry_non_timeout(self):
+        self.plugin._get_controller = Mock(
+            side_effect=plugin_module.OaseError("authentication failed")
+        )
+
+        with self.assertRaises(plugin_module.OaseError):
+            self.plugin._controller_call(lambda active: active)
+
+        self.plugin._get_controller.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()

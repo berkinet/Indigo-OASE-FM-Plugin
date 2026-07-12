@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import threading
+import time
 
 import indigo
 from oase_fm import OaseController, OaseError
@@ -201,11 +202,33 @@ class Plugin(indigo.PluginBase):
 
     def _controller_call(self, callback):
         with self._lock:
-            try:
-                return callback(self._get_controller())
-            except (OaseError, OSError):
-                self._disconnect()
-                raise
+            for attempt in range(2):
+                try:
+                    return callback(self._get_controller())
+                except (OaseError, OSError) as exc:
+                    self._disconnect()
+                    if attempt == 0 and self._is_timeout_error(exc):
+                        self.logger.info(
+                            "OASE connection timed out; retrying once"
+                        )
+                        time.sleep(1.0)
+                        continue
+                    raise
+        raise AssertionError("unreachable")
+
+    @staticmethod
+    def _is_timeout_error(exc):
+        """Recognize socket timeouts and timeout errors wrapped by the protocol."""
+        current = exc
+        seen = set()
+        while current is not None and id(current) not in seen:
+            seen.add(id(current))
+            if isinstance(current, TimeoutError):
+                return True
+            if "timed out" in str(current).lower():
+                return True
+            current = current.__cause__ or current.__context__
+        return False
 
     def _get_egc_device(self, controller):
         if self._egc_device is None:
