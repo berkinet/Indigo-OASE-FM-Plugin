@@ -94,6 +94,25 @@ class PluginLogicTests(unittest.TestCase):
             ("egc", 0),
         )
 
+    def test_failed_initial_connection_is_closed(self):
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        controller = Mock()
+        controller.connect.side_effect = TimeoutError("timed out")
+        original = plugin_module.OaseController
+        plugin_module.OaseController = Mock(return_value=controller)
+        try:
+            with self.assertRaises(TimeoutError):
+                self.plugin._get_controller()
+        finally:
+            plugin_module.OaseController = original
+
+        controller.close.assert_called_once_with()
+        self.assertIsNone(self.plugin._controller)
+
 
 if __name__ == "__main__":
     unittest.main()

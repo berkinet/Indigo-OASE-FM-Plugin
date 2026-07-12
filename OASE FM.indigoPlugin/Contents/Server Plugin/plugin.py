@@ -179,7 +179,14 @@ class Plugin(indigo.PluginBase):
                 local_ip=local_ip,
                 password=password,
             )
-            controller.connect()
+            try:
+                controller.connect()
+            except BaseException:
+                # The shared module also cleans up failed connections. Keep
+                # this guard so the plugin never leaks the TLS callback port
+                # if initialization fails before the controller is retained.
+                controller.close()
+                raise
             self._controller = controller
             self._egc_device = None
         return self._controller
