@@ -144,6 +144,51 @@ class PluginLogicTests(unittest.TestCase):
 
         self.plugin._get_controller.assert_called_once_with()
 
+    def test_refresh_publishes_egc_rpm_and_watts(self):
+        egc_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_EGC,
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: [egc_device]
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        self.controller.get_state.return_value = SimpleNamespace(
+            outlet1=False,
+            outlet2=False,
+            outlet3=False,
+            outlet4=True,
+            dimmer4=128,
+        )
+        self.controller.get_single_egc_device.return_value = SimpleNamespace(
+            uid=b"device"
+        )
+        self.controller.get_egc_state.return_value = SimpleNamespace(
+            on=True,
+            power=50,
+            rpm=2345,
+            watts=78,
+        )
+        try:
+            refreshed = self.plugin._refresh_all()
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+        self.assertTrue(refreshed)
+        egc_device.updateStatesOnServer.assert_called_once_with(
+            [
+                {"key": "brightnessLevel", "value": 50},
+                {"key": "onOffState", "value": True},
+                {"key": "rpm", "value": 2345, "uiValue": "2345 RPM"},
+                {"key": "watts", "value": 78, "uiValue": "78 W"},
+            ]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

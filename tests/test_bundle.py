@@ -25,7 +25,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.1.3")
+        self.assertEqual(info["PluginVersion"], "0.2.0")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -51,6 +51,13 @@ class BundleTests(unittest.TestCase):
         switched = devices.find("Device[@id='switchedSocket']")
         options = switched.findall("./ConfigUI/Field/List/Option")
         self.assertEqual([option.attrib["value"] for option in options], ["1", "2", "4"])
+
+    def test_egc_device_exposes_rpm_and_watts_states(self):
+        devices = ET.parse(SERVER / "Devices.xml").getroot()
+        egc = devices.find("Device[@id='egcDevice']")
+        states = {state.attrib["id"] for state in egc.findall("./States/State")}
+
+        self.assertEqual(states, {"rpm", "watts"})
 
     def test_plugin_config_contains_required_connection_fields(self):
         config = ET.parse(SERVER / "PluginConfig.xml").getroot()

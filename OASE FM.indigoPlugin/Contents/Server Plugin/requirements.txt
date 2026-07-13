@@ -1,2 +1,2 @@
 cryptography==45.0.7
-oase-fm @ https://github.com/berkinet/oase-fm/archive/8e1d96c9ad44ec66edb9c6475529e537a2f3db51.zip
+oase-fm @ https://github.com/berkinet/oase-fm/archive/6951776b634ff45857df8cc1b3f0a3c9ca792585.zip

@@ -1,7 +1,8 @@
 # OASE FM Plugin for Indigo
 
 An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
-and one attached EGC device.
+and one attached EGC device, including live RPM and wattage telemetry when the
+EGC device exposes those standard RDM sensors.
 
 The plugin uses the reusable
 [`oase-fm`](https://github.com/berkinet/oase-fm) Python package for the OASE
@@ -56,6 +57,8 @@ physical socket 3 is dimmable.
 - Polling reflects changes made by the OASE app or other OASE clients in the
   Indigo UI.
 - FM-Master outlet updates remain available if a separate EGC query fails.
+- EGC pump RPM and current power consumption are exposed as read-only Indigo
+  states when reported by the device.
 - Connections are reused and automatically reset after communication errors.
 
 ## Development

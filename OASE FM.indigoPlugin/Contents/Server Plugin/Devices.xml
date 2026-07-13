@@ -28,5 +28,17 @@
                 <Label>The single attached EGC device is selected automatically.</Label>
             </Field>
         </ConfigUI>
+        <States>
+            <State id="rpm" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>RPM</TriggerLabel>
+                <ControlPageLabel>RPM</ControlPageLabel>
+            </State>
+            <State id="watts" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Power consumption</TriggerLabel>
+                <ControlPageLabel>Power consumption</ControlPageLabel>
+            </State>
+        </States>
     </Device>
 </Devices>

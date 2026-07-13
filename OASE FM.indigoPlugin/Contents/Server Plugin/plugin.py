@@ -330,6 +330,24 @@ class Plugin(indigo.PluginBase):
                 )
             )
             updates = dimmer_state_updates(egc_state.on, egc_state.power)
+            rpm = getattr(egc_state, "rpm", None)
+            watts = getattr(egc_state, "watts", None)
+            if rpm is not None:
+                updates.append(
+                    {
+                        "key": "rpm",
+                        "value": rpm,
+                        "uiValue": f"{rpm:g} RPM",
+                    }
+                )
+            if watts is not None:
+                updates.append(
+                    {
+                        "key": "watts",
+                        "value": watts,
+                        "uiValue": f"{watts:g} W",
+                    }
+                )
             for dev in egc_devices:
                 dev.updateStatesOnServer(updates)
                 dev.setErrorStateOnServer(None)
