@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import plistlib
 import sys
@@ -25,10 +26,20 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.2.4")
+        self.assertEqual(info["PluginVersion"], "0.2.5")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
+        )
+
+    def test_protocol_library_is_bundled_without_runtime_downloads(self):
+        library = SERVER / "oase_fm.py"
+
+        self.assertTrue(library.is_file())
+        self.assertFalse((SERVER / "requirements.txt").exists())
+        self.assertEqual(
+            hashlib.sha256(library.read_bytes()).hexdigest(),
+            "8010f04940b4bffafc0293c78bbe8325bd5dd04ec3458c1859bfac85480f8068",
         )
 
     def test_three_native_device_types(self):
