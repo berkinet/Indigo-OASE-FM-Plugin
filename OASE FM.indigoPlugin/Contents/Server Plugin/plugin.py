@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import logging
 import threading
 import time
 
@@ -23,6 +24,25 @@ DEVICE_DIMMER = "dimmableSocket"
 DEVICE_EGC = "egcDevice"
 
 
+class IndigoProtocolLogHandler(logging.Handler):
+    """Forward oase-fm records to Indigo's Event Log."""
+
+    def __init__(self, indigo_logger):
+        super().__init__()
+        self._indigo_logger = indigo_logger
+
+    def emit(self, record):
+        try:
+            # Indigo commonly filters DEBUG records at its own logger. When
+            # protocol debugging is selected, surface them as clearly marked
+            # informational Event Log entries instead.
+            level = max(record.levelno, logging.INFO)
+            prefix = "Protocol DEBUG: " if record.levelno == logging.DEBUG else ""
+            self._indigo_logger.log(level, "%s%s", prefix, record.getMessage())
+        except Exception:
+            self.handleError(record)
+
+
 class Plugin(indigo.PluginBase):
     def __init__(
         self,
@@ -40,13 +60,32 @@ class Plugin(indigo.PluginBase):
         self._lock = threading.RLock()
         self._controller = None
         self._egc_device = None
+        self._protocol_logger = logging.getLogger("oase")
+        self._protocol_log_handler = IndigoProtocolLogHandler(self.logger)
+        self._protocol_logger.addHandler(self._protocol_log_handler)
+        self._protocol_logger.propagate = False
+        self._configure_protocol_logging()
 
     def startup(self):
+        self._configure_protocol_logging()
         self.logger.info("OASE FM plugin started")
 
     def shutdown(self):
         self._disconnect()
         self.logger.info("OASE FM plugin stopped")
+        self._remove_protocol_logging()
+
+    def _configure_protocol_logging(self, level_name=None):
+        if level_name is None:
+            level_name = self.pluginPrefs.get("logLevel", "info")
+        level = logging.DEBUG if level_name == "debug" else logging.INFO
+        self._protocol_logger.setLevel(level)
+        self._protocol_log_handler.setLevel(level)
+
+    def _remove_protocol_logging(self):
+        if self._protocol_log_handler is not None:
+            self._protocol_logger.removeHandler(self._protocol_log_handler)
+            self._protocol_log_handler = None
 
     def runConcurrentThread(self):
         try:
@@ -81,6 +120,9 @@ class Plugin(indigo.PluginBase):
         if not str(values_dict.get("password", "")):
             errors["password"] = "OASE Password is required"
 
+        if values_dict.get("logLevel", "info") not in ("info", "debug"):
+            errors["logLevel"] = "Select Normal or Protocol debugging"
+
         try:
             interval = int(str(values_dict.get("pollInterval", "10")))
             if interval not in range(5, 3601):
@@ -96,6 +138,7 @@ class Plugin(indigo.PluginBase):
 
     def closedPrefsConfigUi(self, values_dict, user_cancelled):
         if not user_cancelled:
+            self._configure_protocol_logging(values_dict.get("logLevel", "info"))
             self._disconnect()
 
     def validateDeviceConfigUi(self, values_dict, type_id, dev_id):

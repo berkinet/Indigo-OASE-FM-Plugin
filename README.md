@@ -30,6 +30,9 @@ Configure the plugin with:
   its TLS callback
 - **OASE Password** — stored by Indigo and concealed in the configuration UI
 - **Polling Interval** — complete status refresh interval, default 10 seconds
+- **Logging** — leave at **Normal**, or select **Protocol debugging** temporarily
+  to record the raw controller exchange in Indigo's Event Log. The password
+  authentication payload is always redacted.
 
 ## Devices
 
@@ -60,6 +63,14 @@ physical socket 3 is dimmable.
 - EGC pump RPM and current power consumption are exposed as read-only Indigo
   states when reported by the device.
 - Connections are reused and automatically reset after communication errors.
+
+## Protocol diagnostics
+
+If EGC telemetry is missing or incorrect, open the plugin configuration, set
+**Logging** to **Protocol debugging**, save, and request a device status update.
+Relevant Event Log entries start with `Protocol DEBUG:`; sensor choices start
+with `Using EGC`. Return Logging to **Normal** after collecting the diagnostic
+entries.
 
 ## Development
 

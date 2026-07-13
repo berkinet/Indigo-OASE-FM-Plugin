@@ -17,4 +17,12 @@
         <Label>Polling Interval:</Label>
         <Description>Seconds between complete status updates (5-3600)</Description>
     </Field>
+    <Field id="logLevel" type="menu" defaultValue="info">
+        <Label>Logging:</Label>
+        <Description>Protocol debugging records raw controller traffic in Indigo's Event Log. Password authentication is redacted.</Description>
+        <List>
+            <Option value="info">Normal</Option>
+            <Option value="debug">Protocol debugging</Option>
+        </List>
+    </Field>
 </PluginConfig>
