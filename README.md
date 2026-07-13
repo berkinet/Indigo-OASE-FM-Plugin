@@ -4,8 +4,8 @@ An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
 and one attached EGC device, including live RPM and wattage telemetry when the
 EGC device exposes those standard RDM sensors.
 
-The plugin uses the reusable
-[`oase-fm`](https://github.com/berkinet/oase-fm) Python package for the OASE
+The plugin bundles the reusable
+[`oase-fm`](https://github.com/berkinet/oase-fm) Python module for the OASE
 UDP/TLS protocol, outlet control, EGC discovery, and RDM communication.
 
 ## Requirements
@@ -15,13 +15,14 @@ UDP/TLS protocol, outlet control, EGC discovery, and RDM communication.
 - An OASE FM-Master EGC reachable from the Indigo server
 - The OASE app password
 
-Indigo automatically installs the pinned `oase-fm` and `cryptography`
-dependencies into the plugin's private `Contents/Packages` directory.
+The `oase-fm` module is included in the plugin bundle. It uses the
+`cryptography` package supplied with Indigo 2025.2, so installation and plugin
+upgrades do not download Python modules from GitHub or PyPI.
 
 ## Installation
 
 Download or clone this repository, then double-click `OASE FM.indigoPlugin`.
-Indigo will install the bundle and its Python requirements.
+Indigo installs the complete bundle without a separate requirements step.
 
 Configure the plugin with:
 
