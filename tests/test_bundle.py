@@ -25,7 +25,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.2.2")
+        self.assertEqual(info["PluginVersion"], "0.2.3")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -65,6 +65,12 @@ class BundleTests(unittest.TestCase):
         self.assertIn("deviceIp", fields)
         self.assertIn("localIp", fields)
         self.assertEqual(fields["password"]["secure"], "true")
+        self.assertEqual(fields["logLevel"]["defaultValue"], "info")
+        log_options = config.findall("./Field[@id='logLevel']/List/Option")
+        self.assertEqual(
+            [option.attrib["value"] for option in log_options],
+            ["info", "debug"],
+        )
 
 
 class MappingTests(unittest.TestCase):

@@ -60,6 +60,20 @@ class PluginLogicTests(unittest.TestCase):
         self.controller = Mock()
         self.plugin._controller_call = lambda callback: callback(self.controller)
 
+    def tearDown(self):
+        self.plugin._remove_protocol_logging()
+
+    def test_protocol_debugging_is_forwarded_to_indigo_log(self):
+        self.plugin.closedPrefsConfigUi({"logLevel": "debug"}, False)
+
+        with self.assertLogs("test", level="INFO") as captured:
+            logging.getLogger("oase").debug("TLS receive: AABBCC")
+
+        self.assertIn(
+            "Protocol DEBUG: TLS receive: AABBCC",
+            "\n".join(captured.output),
+        )
+
     def test_physical_socket_four_uses_third_protocol_outlet(self):
         device = SimpleNamespace(
             deviceTypeId=plugin_module.DEVICE_SWITCHED,
