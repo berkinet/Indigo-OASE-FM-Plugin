@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<Devices>
+    <Device type="relay" id="switchedSocket">
+        <Name>Switched socket</Name>
+        <ConfigUI>
+            <Field id="socketNumber" type="menu">
+                <Label>Socket:</Label>
+                <List>
+                    <Option value="1">1</Option>
+                    <Option value="2">2</Option>
+                    <Option value="4">4</Option>
+                </List>
+            </Field>
+        </ConfigUI>
+    </Device>
+    <Device type="dimmer" id="dimmableSocket">
+        <Name>Dimmable socket</Name>
+        <ConfigUI>
+            <Field id="physicalSocket" type="label">
+                <Label>This device controls physical socket 3.</Label>
+            </Field>
+        </ConfigUI>
+    </Device>
+    <Device type="dimmer" id="egcDevice">
+        <Name>EGC device</Name>
+        <ConfigUI>
+            <Field id="egcSelection" type="label">
+                <Label>The single attached EGC device is selected automatically.</Label>
+            </Field>
+        </ConfigUI>
+        <States>
+            <State id="rpm" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>RPM</TriggerLabel>
+                <ControlPageLabel>RPM</ControlPageLabel>
+            </State>
+            <State id="watts" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Power consumption</TriggerLabel>
+                <ControlPageLabel>Power consumption</ControlPageLabel>
+            </State>
+        </States>
+    </Device>
+</Devices>

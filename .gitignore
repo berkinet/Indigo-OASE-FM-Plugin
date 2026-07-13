@@ -6,4 +6,5 @@ __pycache__/
 venv/
 dist/
 build/
-
+OASE FM.indigoPlugin/Contents/Packages/*
+!OASE FM.indigoPlugin/Contents/Packages/.gitkeep
