@@ -61,7 +61,8 @@ physical socket 3 is dimmable.
   Indigo UI.
 - FM-Master outlet updates remain available if a separate EGC query fails.
 - EGC pump RPM and current power consumption are exposed as read-only Indigo
-  states when reported by the device.
+  states when reported by the device. OASE's `ActualSpeed` sensor supplies the
+  live RPM value; `NominalSpeed` is not used for status.
 - Connections are reused and automatically reset after communication errors.
 
 ## Protocol diagnostics
