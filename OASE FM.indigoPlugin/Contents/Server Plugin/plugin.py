@@ -383,6 +383,7 @@ class Plugin(indigo.PluginBase):
                     if dev.deviceTypeId == DEVICE_CONTROLLER:
                         dev.updateStatesOnServer(
                             [
+                                {"key": "onOffState", "value": False},
                                 {"key": "connected", "value": False},
                                 {"key": "authenticated", "value": False},
                             ]
@@ -413,6 +414,7 @@ class Plugin(indigo.PluginBase):
                 if discovery is None:
                     raise OaseError("Controller discovery information is unavailable")
                 updates = [
+                    {"key": "onOffState", "value": True},
                     {
                         "key": "rssi",
                         "value": controller_state.rssi,
@@ -449,6 +451,13 @@ class Plugin(indigo.PluginBase):
                     exc,
                 )
                 for dev in controller_devices:
+                    dev.updateStatesOnServer(
+                        [
+                            {"key": "onOffState", "value": False},
+                            {"key": "connected", "value": False},
+                            {"key": "authenticated", "value": False},
+                        ]
+                    )
                     dev.setErrorStateOnServer(str(exc))
                 if raise_errors:
                     raise
