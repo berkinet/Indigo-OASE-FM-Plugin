@@ -26,7 +26,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.3.1")
+        self.assertEqual(info["PluginVersion"], "0.3.2")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -99,7 +99,7 @@ class BundleTests(unittest.TestCase):
                 "statusText",
             },
         )
-        self.assertEqual(controller.findtext("UiDisplayStateId"), "rssi")
+        self.assertIsNone(controller.find("UiDisplayStateId"))
 
     def test_plugin_config_contains_required_connection_fields(self):
         config = ET.parse(SERVER / "PluginConfig.xml").getroot()

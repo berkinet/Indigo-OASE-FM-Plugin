@@ -281,6 +281,7 @@ class PluginLogicTests(unittest.TestCase):
         self.assertTrue(refreshed)
         controller_device.updateStatesOnServer.assert_called_once_with(
             [
+                {"key": "onOffState", "value": True},
                 {"key": "rssi", "value": -57, "uiValue": "-57 dBm"},
                 {"key": "signalQuality", "value": "Strong"},
                 {"key": "connected", "value": True},
@@ -351,8 +352,45 @@ class PluginLogicTests(unittest.TestCase):
 
         self.assertFalse(refreshed)
         egc_device.updateStatesOnServer.assert_called_once()
+        controller_device.updateStatesOnServer.assert_called_once_with(
+            [
+                {"key": "onOffState", "value": False},
+                {"key": "connected", "value": False},
+                {"key": "authenticated", "value": False},
+            ]
+        )
         controller_device.setErrorStateOnServer.assert_called_once_with(
             "RSSI unavailable"
+        )
+
+    def test_controller_outage_sets_native_sensor_state_off(self):
+        controller_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_CONTROLLER,
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: [controller_device]
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        self.controller.get_state.side_effect = plugin_module.OaseError("offline")
+        try:
+            with self.assertLogs("test", level="WARNING"):
+                refreshed = self.plugin._refresh_all()
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+        self.assertFalse(refreshed)
+        controller_device.updateStatesOnServer.assert_called_once_with(
+            [
+                {"key": "onOffState", "value": False},
+                {"key": "connected", "value": False},
+                {"key": "authenticated", "value": False},
+            ]
         )
 
     def test_repeated_refresh_failures_log_once_and_recovery_logs_once(self):
