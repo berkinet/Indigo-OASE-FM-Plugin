@@ -281,7 +281,6 @@ class PluginLogicTests(unittest.TestCase):
         self.assertTrue(refreshed)
         controller_device.updateStatesOnServer.assert_called_once_with(
             [
-                {"key": "sensorValue", "value": -57, "uiValue": "-57 dBm"},
                 {"key": "rssi", "value": -57, "uiValue": "-57 dBm"},
                 {"key": "signalQuality", "value": "Strong"},
                 {"key": "connected", "value": True},

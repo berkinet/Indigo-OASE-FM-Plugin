@@ -414,11 +414,6 @@ class Plugin(indigo.PluginBase):
                     raise OaseError("Controller discovery information is unavailable")
                 updates = [
                     {
-                        "key": "sensorValue",
-                        "value": controller_state.rssi,
-                        "uiValue": f"{controller_state.rssi} dBm",
-                    },
-                    {
                         "key": "rssi",
                         "value": controller_state.rssi,
                         "uiValue": f"{controller_state.rssi} dBm",
