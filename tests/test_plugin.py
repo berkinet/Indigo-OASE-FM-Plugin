@@ -107,6 +107,10 @@ class PluginLogicTests(unittest.TestCase):
             self.plugin._assignment(plugin_module.DEVICE_EGC, {}),
             ("egc", 0),
         )
+        self.assertEqual(
+            self.plugin._assignment(plugin_module.DEVICE_CONTROLLER, {}),
+            ("controller", 0),
+        )
 
     def test_failed_initial_connection_is_closed(self):
         self.plugin.pluginPrefs = {
@@ -144,6 +148,36 @@ class PluginLogicTests(unittest.TestCase):
 
         self.assertIs(result, controller)
         self.assertEqual(self.plugin._get_controller.call_count, 2)
+
+    def test_timeout_retry_is_visible_only_with_protocol_debugging(self):
+        controller = Mock()
+        self.plugin._get_controller = Mock(
+            side_effect=[TimeoutError("timed out"), controller]
+        )
+        original_sleep = plugin_module.time.sleep
+        plugin_module.time.sleep = Mock()
+        try:
+            with self.assertNoLogs("test", level="INFO"):
+                plugin_module.Plugin._controller_call(
+                    self.plugin,
+                    lambda active: active,
+                )
+
+            protocol_debug = Mock()
+            self.plugin._protocol_logger.debug = protocol_debug
+            self.plugin._get_controller = Mock(
+                side_effect=[TimeoutError("timed out"), controller]
+            )
+            plugin_module.Plugin._controller_call(
+                self.plugin,
+                lambda active: active,
+            )
+        finally:
+            plugin_module.time.sleep = original_sleep
+
+        protocol_debug.assert_called_once_with(
+            "OASE connection timed out; retrying once"
+        )
 
     def test_controller_call_does_not_retry_non_timeout(self):
         self.plugin._get_controller = Mock(
@@ -202,6 +236,171 @@ class PluginLogicTests(unittest.TestCase):
                 {"key": "watts", "value": 78, "uiValue": "78 W"},
             ]
         )
+
+    def test_refresh_publishes_controller_rssi_and_quality(self):
+        controller_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_CONTROLLER,
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: [controller_device]
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        self.controller.get_state.return_value = SimpleNamespace(
+            outlet1=False,
+            outlet2=False,
+            outlet3=False,
+            outlet4=False,
+            dimmer4=0,
+        )
+        self.controller.get_controller_state.return_value = SimpleNamespace(rssi=-57)
+        self.plugin._discovery = SimpleNamespace(
+            hardware_type=4,
+            device_index=0,
+            name="CM Oase",
+            serial_number="217200019384",
+            long_name="FM-Master EGC Home",
+            order_number=12345,
+            firmware=2,
+            firmware_low=7,
+            firmware_high=3,
+            wifi_channel=6,
+            network_type=1,
+            status="Ready",
+        )
+        try:
+            refreshed = self.plugin._refresh_all()
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+        self.assertTrue(refreshed)
+        controller_device.updateStatesOnServer.assert_called_once_with(
+            [
+                {"key": "sensorValue", "value": -57, "uiValue": "-57 dBm"},
+                {"key": "rssi", "value": -57, "uiValue": "-57 dBm"},
+                {"key": "signalQuality", "value": "Strong"},
+                {"key": "connected", "value": True},
+                {"key": "authenticated", "value": True},
+                {"key": "hardwareType", "value": 4},
+                {"key": "deviceIndex", "value": 0},
+                {"key": "controllerName", "value": "CM Oase"},
+                {"key": "serialNumber", "value": "217200019384"},
+                {"key": "modelName", "value": "FM-Master EGC Home"},
+                {"key": "articleNumber", "value": 12345},
+                {"key": "firmware", "value": 2},
+                {"key": "firmwareLow", "value": 7},
+                {"key": "firmwareHigh", "value": 3},
+                {"key": "wifiChannel", "value": 6},
+                {"key": "networkType", "value": 1},
+                {"key": "statusText", "value": "Ready"},
+            ]
+        )
+        controller_device.setErrorStateOnServer.assert_called_once_with(None)
+
+    def test_rssi_failure_does_not_block_egc_refresh(self):
+        controller_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_CONTROLLER,
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        egc_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_EGC,
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: [
+            controller_device,
+            egc_device,
+        ]
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        self.controller.get_state.return_value = SimpleNamespace(
+            outlet1=False,
+            outlet2=False,
+            outlet3=False,
+            outlet4=False,
+            dimmer4=0,
+        )
+        self.controller.get_controller_state.side_effect = plugin_module.OaseError(
+            "RSSI unavailable"
+        )
+        self.controller.get_single_egc_device.return_value = SimpleNamespace(
+            uid=b"device"
+        )
+        self.controller.get_egc_state.return_value = SimpleNamespace(
+            on=True,
+            power=50,
+            rpm=2345,
+            watts=78,
+        )
+        try:
+            with self.assertLogs("test", level="WARNING"):
+                refreshed = self.plugin._refresh_all()
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+        self.assertFalse(refreshed)
+        egc_device.updateStatesOnServer.assert_called_once()
+        controller_device.setErrorStateOnServer.assert_called_once_with(
+            "RSSI unavailable"
+        )
+
+    def test_repeated_refresh_failures_log_once_and_recovery_logs_once(self):
+        socket_device = SimpleNamespace(
+            enabled=True,
+            deviceTypeId=plugin_module.DEVICE_SWITCHED,
+            pluginProps={"socketNumber": "1"},
+            updateStatesOnServer=Mock(),
+            setErrorStateOnServer=Mock(),
+        )
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: [socket_device]
+        self.plugin.pluginPrefs = {
+            "deviceIp": "192.0.2.1",
+            "localIp": "192.0.2.2",
+            "password": "pw",
+        }
+        self.controller.get_state.side_effect = plugin_module.OaseError("timed out")
+        try:
+            with self.assertLogs("test", level="WARNING") as failures:
+                self.assertFalse(self.plugin._refresh_all())
+                self.assertFalse(self.plugin._refresh_all())
+
+            self.controller.get_state.side_effect = None
+            self.controller.get_state.return_value = SimpleNamespace(
+                outlet1=True,
+                outlet2=False,
+                outlet3=False,
+                outlet4=False,
+                dimmer4=0,
+            )
+            with self.assertLogs("test", level="INFO") as recovery:
+                self.assertTrue(self.plugin._refresh_all())
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+        failure_messages = [
+            message
+            for message in failures.output
+            if "Unable to refresh FM-Master status" in message
+        ]
+        self.assertEqual(len(failure_messages), 1)
+        self.assertIn(
+            "OASE controller connection restored",
+            "\n".join(recovery.output),
+        )
+        self.assertEqual(socket_device.setErrorStateOnServer.call_count, 3)
 
 
 if __name__ == "__main__":

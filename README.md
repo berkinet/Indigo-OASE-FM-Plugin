@@ -1,8 +1,9 @@
 # OASE FM Plugin for Indigo
 
 An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
-and one attached EGC device, including live RPM and wattage telemetry when the
-EGC device exposes those standard RDM sensors.
+and one attached EGC device, including controller Wi-Fi signal strength and
+live RPM and wattage telemetry when the EGC device exposes those standard RDM
+sensors.
 
 The plugin bundles the reusable
 [`oase-fm`](https://github.com/berkinet/oase-fm) Python module for the OASE
@@ -37,13 +38,14 @@ Configure the plugin with:
 
 ## Devices
 
-Create one of three native Indigo device types:
+Create one of four native Indigo device types:
 
 | Plugin device type | Indigo type | Assignment |
 | --- | --- | --- |
 | Switched socket | Relay | Select physical socket 1, 2, or 4 |
 | Dimmable socket | Dimmer | Physical socket 3 |
 | EGC device | Dimmer | Single attached EGC, discovered automatically |
+| FM-Master controller | Sensor | Configured controller and its Wi-Fi RSSI |
 
 Duplicate physical assignments are rejected during device configuration.
 
@@ -64,7 +66,19 @@ physical socket 3 is dimmable.
 - EGC pump RPM and current power consumption are exposed as read-only Indigo
   states when reported by the device. OASE's `ActualSpeed` sensor supplies the
   live RPM value; `NominalSpeed` is not used for status.
+- The optional FM-Master controller Sensor reports raw Wi-Fi RSSI in dBm as its
+  main value and as an `rssi` state. Its `signalQuality` state reports Weak,
+  Fair, Good, or Strong using the thresholds found in OASE's app library.
+- The controller Sensor also exposes the discovery data currently understood:
+  hardware type, device index, controller and model names, serial and article
+  numbers, three firmware values, Wi-Fi channel, network type, and controller
+  status text. `connected` and `authenticated` are determined locally by the
+  plugin rather than reported discovery fields.
 - Connections are reused and automatically reset after communication errors.
+- A controller outage logs one warning and marks the devices unavailable.
+  Continued polling failures remain quiet until a successful refresh logs that
+  the connection has been restored. Individual retry details remain available
+  under Protocol debugging.
 
 ## Protocol diagnostics
 
@@ -97,6 +111,8 @@ xmllint --noout "OASE FM.indigoPlugin/Contents/Server Plugin/PluginConfig.xml"
   added later if multi-EGC installations need it.
 - External state changes are detected by polling; unsolicited OASE broadcast
   support has not yet been identified.
+- SSID and cloud-connection status are not yet identified. Additional bytes in
+  the 324-byte controller discovery response remain undecoded.
 
 ## Acknowledgement
 

@@ -16,12 +16,14 @@ from oase_plugin import (
     dimmer_percent_to_raw,
     egc_percent_to_raw,
     map_fm_state,
+    rssi_quality,
 )
 
 
 DEVICE_SWITCHED = "switchedSocket"
 DEVICE_DIMMER = "dimmableSocket"
 DEVICE_EGC = "egcDevice"
+DEVICE_CONTROLLER = "controllerDevice"
 
 
 class IndigoProtocolLogHandler(logging.Handler):
@@ -59,7 +61,9 @@ class Plugin(indigo.PluginBase):
         )
         self._lock = threading.RLock()
         self._controller = None
+        self._discovery = None
         self._egc_device = None
+        self._failed_refreshes = set()
         self._protocol_logger = logging.getLogger("oase")
         self._protocol_log_handler = IndigoProtocolLogHandler(self.logger)
         self._protocol_logger.addHandler(self._protocol_log_handler)
@@ -140,6 +144,7 @@ class Plugin(indigo.PluginBase):
         if not user_cancelled:
             self._configure_protocol_logging(values_dict.get("logLevel", "info"))
             self._disconnect()
+            self._failed_refreshes.clear()
 
     def validateDeviceConfigUi(self, values_dict, type_id, dev_id):
         errors = indigo.Dict()
@@ -225,7 +230,7 @@ class Plugin(indigo.PluginBase):
                 password=password,
             )
             try:
-                controller.connect()
+                discovery = controller.connect()
             except BaseException:
                 # The shared module also cleans up failed connections. Keep
                 # this guard so the plugin never leaks the TLS callback port
@@ -233,6 +238,7 @@ class Plugin(indigo.PluginBase):
                 controller.close()
                 raise
             self._controller = controller
+            self._discovery = discovery
             self._egc_device = None
         return self._controller
 
@@ -241,6 +247,7 @@ class Plugin(indigo.PluginBase):
             if self._controller is not None:
                 self._controller.close()
             self._controller = None
+            self._discovery = None
             self._egc_device = None
 
     def _controller_call(self, callback):
@@ -251,7 +258,7 @@ class Plugin(indigo.PluginBase):
                 except (OaseError, OSError) as exc:
                     self._disconnect()
                     if attempt == 0 and self._is_timeout_error(exc):
-                        self.logger.info(
+                        self._protocol_logger.debug(
                             "OASE connection timed out; retrying once"
                         )
                         time.sleep(1.0)
@@ -277,6 +284,18 @@ class Plugin(indigo.PluginBase):
         if self._egc_device is None:
             self._egc_device = controller.get_single_egc_device()
         return self._egc_device
+
+    def _refresh_failed(self, refresh_type, message, exc):
+        """Log only the transition into a failed refresh state."""
+        if refresh_type not in self._failed_refreshes:
+            self.logger.warning("%s: %s", message, exc)
+            self._failed_refreshes.add(refresh_type)
+
+    def _refresh_succeeded(self, refresh_type, recovery_message):
+        """Log only the transition back from a failed refresh state."""
+        if refresh_type in self._failed_refreshes:
+            self._failed_refreshes.remove(refresh_type)
+            self.logger.info(recovery_message)
 
     def _set_on_off(self, dev, on):
         if dev.deviceTypeId == DEVICE_SWITCHED:
@@ -352,10 +371,22 @@ class Plugin(indigo.PluginBase):
                     continue
                 dev.updateStatesOnServer(updates)
                 dev.setErrorStateOnServer(None)
+            self._refresh_succeeded("fm-master", "OASE controller connection restored")
         except (OaseError, OSError, ValueError, KeyError) as exc:
-            self.logger.warning("Unable to refresh FM-Master status: %s", exc)
+            self._refresh_failed(
+                "fm-master",
+                "Unable to refresh FM-Master status",
+                exc,
+            )
             for dev in devices:
                 if dev.enabled:
+                    if dev.deviceTypeId == DEVICE_CONTROLLER:
+                        dev.updateStatesOnServer(
+                            [
+                                {"key": "connected", "value": False},
+                                {"key": "authenticated", "value": False},
+                            ]
+                        )
                     dev.setErrorStateOnServer(str(exc))
             if raise_errors:
                 raise
@@ -364,8 +395,71 @@ class Plugin(indigo.PluginBase):
         egc_devices = [
             dev for dev in devices if dev.enabled and dev.deviceTypeId == DEVICE_EGC
         ]
+        controller_devices = [
+            dev
+            for dev in devices
+            if dev.enabled and dev.deviceTypeId == DEVICE_CONTROLLER
+        ]
+        controller_ok = True
+        if controller_devices:
+            try:
+                controller_state = self._controller_call(
+                    lambda controller: controller.get_controller_state()
+                )
+                if controller_state.rssi is None:
+                    raise OaseError("Controller does not report Wi-Fi RSSI")
+                quality = rssi_quality(controller_state.rssi)
+                discovery = self._discovery
+                if discovery is None:
+                    raise OaseError("Controller discovery information is unavailable")
+                updates = [
+                    {
+                        "key": "sensorValue",
+                        "value": controller_state.rssi,
+                        "uiValue": f"{controller_state.rssi} dBm",
+                    },
+                    {
+                        "key": "rssi",
+                        "value": controller_state.rssi,
+                        "uiValue": f"{controller_state.rssi} dBm",
+                    },
+                    {"key": "signalQuality", "value": quality},
+                    {"key": "connected", "value": True},
+                    {"key": "authenticated", "value": True},
+                    {"key": "hardwareType", "value": discovery.hardware_type},
+                    {"key": "deviceIndex", "value": discovery.device_index},
+                    {"key": "controllerName", "value": discovery.name},
+                    {"key": "serialNumber", "value": discovery.serial_number},
+                    {"key": "modelName", "value": discovery.long_name},
+                    {"key": "articleNumber", "value": discovery.order_number},
+                    {"key": "firmware", "value": discovery.firmware},
+                    {"key": "firmwareLow", "value": discovery.firmware_low},
+                    {"key": "firmwareHigh", "value": discovery.firmware_high},
+                    {"key": "wifiChannel", "value": discovery.wifi_channel},
+                    {"key": "networkType", "value": discovery.network_type},
+                    {"key": "statusText", "value": discovery.status},
+                ]
+                for dev in controller_devices:
+                    dev.updateStatesOnServer(updates)
+                    dev.setErrorStateOnServer(None)
+                self._refresh_succeeded(
+                    "controller-meta",
+                    "OASE controller information restored",
+                )
+            except (OaseError, OSError, ValueError, KeyError) as exc:
+                controller_ok = False
+                self._refresh_failed(
+                    "controller-meta",
+                    "Unable to refresh OASE controller information",
+                    exc,
+                )
+                for dev in controller_devices:
+                    dev.setErrorStateOnServer(str(exc))
+                if raise_errors:
+                    raise
+
         if not egc_devices:
-            return True
+            return controller_ok
         try:
             egc_state = self._controller_call(
                 lambda controller: controller.get_egc_state(
@@ -394,9 +488,10 @@ class Plugin(indigo.PluginBase):
             for dev in egc_devices:
                 dev.updateStatesOnServer(updates)
                 dev.setErrorStateOnServer(None)
-            return True
+            self._refresh_succeeded("egc", "OASE EGC status restored")
+            return controller_ok
         except (OaseError, OSError, ValueError, KeyError) as exc:
-            self.logger.warning("Unable to refresh EGC status: %s", exc)
+            self._refresh_failed("egc", "Unable to refresh EGC status", exc)
             for dev in egc_devices:
                 dev.setErrorStateOnServer(str(exc))
             if raise_errors:
@@ -417,4 +512,6 @@ class Plugin(indigo.PluginBase):
             return "socket", 3
         if type_id == DEVICE_EGC:
             return "egc", 0
+        if type_id == DEVICE_CONTROLLER:
+            return "controller", 0
         return None

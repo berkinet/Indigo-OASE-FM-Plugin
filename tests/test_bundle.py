@@ -26,7 +26,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.2.5")
+        self.assertEqual(info["PluginVersion"], "0.3.0")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -39,10 +39,10 @@ class BundleTests(unittest.TestCase):
         self.assertFalse((SERVER / "requirements.txt").exists())
         self.assertEqual(
             hashlib.sha256(library.read_bytes()).hexdigest(),
-            "8010f04940b4bffafc0293c78bbe8325bd5dd04ec3458c1859bfac85480f8068",
+            "205db87d7a660ada1d7037452c1ef1e985e876b1eebe18e23ade5682b1adb141",
         )
 
-    def test_three_native_device_types(self):
+    def test_four_native_device_types(self):
         devices = ET.parse(SERVER / "Devices.xml").getroot()
         found = {
             element.attrib["id"]: element.attrib["type"]
@@ -54,6 +54,7 @@ class BundleTests(unittest.TestCase):
                 "switchedSocket": "relay",
                 "dimmableSocket": "dimmer",
                 "egcDevice": "dimmer",
+                "controllerDevice": "sensor",
             },
         )
 
@@ -69,6 +70,35 @@ class BundleTests(unittest.TestCase):
         states = {state.attrib["id"] for state in egc.findall("./States/State")}
 
         self.assertEqual(states, {"rpm", "watts"})
+
+    def test_controller_device_exposes_rssi_states(self):
+        devices = ET.parse(SERVER / "Devices.xml").getroot()
+        controller = devices.find("Device[@id='controllerDevice']")
+        states = {
+            state.attrib["id"] for state in controller.findall("./States/State")
+        }
+
+        self.assertEqual(
+            states,
+            {
+                "connected",
+                "authenticated",
+                "rssi",
+                "signalQuality",
+                "hardwareType",
+                "deviceIndex",
+                "controllerName",
+                "serialNumber",
+                "modelName",
+                "articleNumber",
+                "firmware",
+                "firmwareLow",
+                "firmwareHigh",
+                "wifiChannel",
+                "networkType",
+                "statusText",
+            },
+        )
 
     def test_plugin_config_contains_required_connection_fields(self):
         config = ET.parse(SERVER / "PluginConfig.xml").getroot()
@@ -110,6 +140,15 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(oase_plugin.egc_percent_to_raw(0), 0)
         self.assertEqual(oase_plugin.egc_percent_to_raw(50), 127)
         self.assertEqual(oase_plugin.egc_percent_to_raw(100), 255)
+
+    def test_rssi_quality_uses_oase_thresholds(self):
+        self.assertEqual(oase_plugin.rssi_quality(-81), "Weak")
+        self.assertEqual(oase_plugin.rssi_quality(-80), "Weak")
+        self.assertEqual(oase_plugin.rssi_quality(-79), "Fair")
+        self.assertEqual(oase_plugin.rssi_quality(-68), "Fair")
+        self.assertEqual(oase_plugin.rssi_quality(-67), "Good")
+        self.assertEqual(oase_plugin.rssi_quality(-60), "Good")
+        self.assertEqual(oase_plugin.rssi_quality(-59), "Strong")
 
     def test_dimmer_on_off_state_is_applied_after_brightness(self):
         self.assertEqual(
