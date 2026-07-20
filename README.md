@@ -2,8 +2,8 @@
 
 An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
 and one attached EGC device, including controller Wi-Fi signal strength and
-live RPM and wattage telemetry when the EGC device exposes those standard RDM
-sensors.
+live RPM, wattage, and temperature telemetry when the EGC device exposes those
+standard RDM sensors.
 
 The plugin bundles the reusable
 [`oase-fm`](https://github.com/berkinet/oase-fm) Python module for the OASE
@@ -48,6 +48,8 @@ Create one of four native Indigo device types:
 | FM-Master controller | Sensor | Configured controller and its Wi-Fi RSSI |
 
 Duplicate physical assignments are rejected during device configuration.
+The Indigo Address field is filled automatically with `Socket 1` through
+`Socket 4`, the configured FM-Master IP address, or the discovered EGC UID.
 
 The OASE protocol numbers its three ordinary channels before its dimmer
 channel. The plugin translates those internal selectors to the FM-Master's
@@ -66,6 +68,11 @@ physical socket 3 is dimmable.
 - EGC pump RPM and current power consumption are exposed as read-only Indigo
   states when reported by the device. OASE's `ActualSpeed` sensor supplies the
   live RPM value; `NominalSpeed` is not used for status.
+- EGC module, PCB, and water temperatures are exposed in degrees Celsius when
+  the device advertises OASE's `Temp Modul`, `Temp_PCB`, and `Temp Water`
+  sensors.
+- The EGC device also exposes its manufacturer identifier, device identifier,
+  stable combined UID, article number, and subdevice count as read-only states.
 - The optional FM-Master controller Sensor reports raw Wi-Fi RSSI in dBm as its
   main value and as an `rssi` state. Its `signalQuality` state reports Weak,
   Fair, Good, or Strong using the thresholds found in OASE's app library.

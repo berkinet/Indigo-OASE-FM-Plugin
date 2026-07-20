@@ -103,6 +103,9 @@ class Plugin(indigo.PluginBase):
 
     def deviceStartComm(self, dev):
         super().deviceStartComm(dev)
+        address = self._static_address(dev.deviceTypeId, dev.pluginProps)
+        if address is not None:
+            self._update_address(dev, address)
         self._refresh_all()
 
     def deviceStopComm(self, dev):
@@ -160,6 +163,12 @@ class Plugin(indigo.PluginBase):
                         f"{existing.name!r} already uses this OASE device assignment."
                     )
                     break
+
+        address = self._static_address(type_id, values_dict)
+        if address is None and type_id == DEVICE_EGC:
+            address = "EGC"
+        if address is not None:
+            values_dict["address"] = address
 
         if errors:
             return False, values_dict, errors
@@ -489,7 +498,37 @@ class Plugin(indigo.PluginBase):
                         "uiValue": f"{watts:g} W",
                     }
                 )
+            for key, value in (
+                ("moduleTemperature", getattr(egc_state, "module_temperature", None)),
+                ("pcbTemperature", getattr(egc_state, "pcb_temperature", None)),
+                ("waterTemperature", getattr(egc_state, "water_temperature", None)),
+            ):
+                if value is not None:
+                    updates.append(
+                        {
+                            "key": key,
+                            "value": value,
+                            "uiValue": f"{value:g} °C",
+                        }
+                    )
+            egc = egc_state.device
+            updates.extend(
+                [
+                    {
+                        "key": "manufacturerIdentifier",
+                        "value": egc.manufacturer_identifier,
+                    },
+                    {
+                        "key": "deviceIdentifier",
+                        "value": egc.device_identifier,
+                    },
+                    {"key": "uid", "value": egc.uid_text},
+                    {"key": "articleNumber", "value": egc.article_number},
+                    {"key": "subdeviceCount", "value": egc.subdevice_count},
+                ]
+            )
             for dev in egc_devices:
+                self._update_address(dev, f"EGC {egc.uid_text}")
                 dev.updateStatesOnServer(updates)
                 dev.setErrorStateOnServer(None)
             self._refresh_succeeded("egc", "OASE EGC status restored")
@@ -501,6 +540,29 @@ class Plugin(indigo.PluginBase):
             if raise_errors:
                 raise
             return False
+
+    def _static_address(self, type_id, props):
+        if type_id == DEVICE_SWITCHED:
+            assignment = self._assignment(type_id, props)
+            if assignment is not None:
+                return f"Socket {assignment[1]}"
+        elif type_id == DEVICE_DIMMER:
+            return "Socket 3"
+        elif type_id == DEVICE_CONTROLLER:
+            device_ip, _local_ip, _password = self._configuration()
+            if device_ip:
+                return device_ip
+        return None
+
+    @staticmethod
+    def _update_address(dev, address):
+        if getattr(dev, "address", None) == address:
+            return
+        props = dict(dev.pluginProps)
+        if props.get("address") == address:
+            return
+        props["address"] = address
+        dev.replacePluginPropsOnServer(props)
 
     @staticmethod
     def _assignment(type_id, props):
