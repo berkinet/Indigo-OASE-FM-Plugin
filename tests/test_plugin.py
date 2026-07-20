@@ -112,6 +112,40 @@ class PluginLogicTests(unittest.TestCase):
             ("controller", 0),
         )
 
+    def test_device_config_populates_static_addresses(self):
+        self.plugin.pluginPrefs = {"deviceIp": "192.0.2.10"}
+        cases = (
+            (plugin_module.DEVICE_SWITCHED, {"socketNumber": "4"}, "Socket 4"),
+            (plugin_module.DEVICE_DIMMER, {}, "Socket 3"),
+            (plugin_module.DEVICE_EGC, {}, "EGC"),
+            (plugin_module.DEVICE_CONTROLLER, {}, "192.0.2.10"),
+        )
+
+        original_iter = plugin_module.indigo.devices.iter
+        plugin_module.indigo.devices.iter = lambda _plugin_id: []
+        try:
+            for type_id, values, expected in cases:
+                valid, updated = self.plugin.validateDeviceConfigUi(
+                    values, type_id, 0
+                )
+                self.assertTrue(valid)
+                self.assertEqual(updated["address"], expected)
+        finally:
+            plugin_module.indigo.devices.iter = original_iter
+
+    def test_existing_device_address_is_replaced_only_when_needed(self):
+        device = SimpleNamespace(
+            address="Old",
+            pluginProps={"address": "Old", "socketNumber": "1"},
+            replacePluginPropsOnServer=Mock(),
+        )
+
+        self.plugin._update_address(device, "Socket 1")
+
+        device.replacePluginPropsOnServer.assert_called_once_with(
+            {"address": "Socket 1", "socketNumber": "1"}
+        )
+
     def test_failed_initial_connection_is_closed(self):
         self.plugin.pluginPrefs = {
             "deviceIp": "192.0.2.1",
@@ -196,6 +230,9 @@ class PluginLogicTests(unittest.TestCase):
         egc_device = SimpleNamespace(
             enabled=True,
             deviceTypeId=plugin_module.DEVICE_EGC,
+            address="EGC",
+            pluginProps={"address": "EGC"},
+            replacePluginPropsOnServer=Mock(),
             updateStatesOnServer=Mock(),
             setErrorStateOnServer=Mock(),
         )
@@ -213,14 +250,24 @@ class PluginLogicTests(unittest.TestCase):
             outlet4=True,
             dimmer4=128,
         )
-        self.controller.get_single_egc_device.return_value = SimpleNamespace(
-            uid=b"device"
+        egc_identity = SimpleNamespace(
+            uid=b"device",
+            uid_text="4F41:000001C8",
+            manufacturer_identifier=0x4F41,
+            device_identifier=456,
+            article_number=123,
+            subdevice_count=1,
         )
+        self.controller.get_single_egc_device.return_value = egc_identity
         self.controller.get_egc_state.return_value = SimpleNamespace(
+            device=egc_identity,
             on=True,
             power=50,
             rpm=2345,
             watts=78,
+            module_temperature=24,
+            pcb_temperature=31,
+            water_temperature=18,
         )
         try:
             refreshed = self.plugin._refresh_all()
@@ -234,7 +281,30 @@ class PluginLogicTests(unittest.TestCase):
                 {"key": "onOffState", "value": True},
                 {"key": "rpm", "value": 2345, "uiValue": "2345 RPM"},
                 {"key": "watts", "value": 78, "uiValue": "78 W"},
+                {
+                    "key": "moduleTemperature",
+                    "value": 24,
+                    "uiValue": "24 °C",
+                },
+                {
+                    "key": "pcbTemperature",
+                    "value": 31,
+                    "uiValue": "31 °C",
+                },
+                {
+                    "key": "waterTemperature",
+                    "value": 18,
+                    "uiValue": "18 °C",
+                },
+                {"key": "manufacturerIdentifier", "value": 0x4F41},
+                {"key": "deviceIdentifier", "value": 456},
+                {"key": "uid", "value": "4F41:000001C8"},
+                {"key": "articleNumber", "value": 123},
+                {"key": "subdeviceCount", "value": 1},
             ]
+        )
+        egc_device.replacePluginPropsOnServer.assert_called_once_with(
+            {"address": "EGC 4F41:000001C8"}
         )
 
     def test_refresh_publishes_controller_rssi_and_quality(self):
@@ -312,6 +382,9 @@ class PluginLogicTests(unittest.TestCase):
         egc_device = SimpleNamespace(
             enabled=True,
             deviceTypeId=plugin_module.DEVICE_EGC,
+            address="EGC 4F41:000001C8",
+            pluginProps={"address": "EGC 4F41:000001C8"},
+            replacePluginPropsOnServer=Mock(),
             updateStatesOnServer=Mock(),
             setErrorStateOnServer=Mock(),
         )
@@ -335,10 +408,17 @@ class PluginLogicTests(unittest.TestCase):
         self.controller.get_controller_state.side_effect = plugin_module.OaseError(
             "RSSI unavailable"
         )
-        self.controller.get_single_egc_device.return_value = SimpleNamespace(
-            uid=b"device"
+        egc_identity = SimpleNamespace(
+            uid=b"device",
+            uid_text="4F41:000001C8",
+            manufacturer_identifier=0x4F41,
+            device_identifier=456,
+            article_number=123,
+            subdevice_count=1,
         )
+        self.controller.get_single_egc_device.return_value = egc_identity
         self.controller.get_egc_state.return_value = SimpleNamespace(
+            device=egc_identity,
             on=True,
             power=50,
             rpm=2345,

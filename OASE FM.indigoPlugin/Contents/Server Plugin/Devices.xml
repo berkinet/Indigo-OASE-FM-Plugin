@@ -11,6 +11,9 @@
                     <Option value="4">4</Option>
                 </List>
             </Field>
+            <Field id="address" type="textfield" readonly="true">
+                <Label>Address:</Label>
+            </Field>
         </ConfigUI>
     </Device>
     <Device type="dimmer" id="dimmableSocket">
@@ -19,6 +22,9 @@
             <Field id="physicalSocket" type="label">
                 <Label>This device controls physical socket 3.</Label>
             </Field>
+            <Field id="address" type="textfield" readonly="true">
+                <Label>Address:</Label>
+            </Field>
         </ConfigUI>
     </Device>
     <Device type="dimmer" id="egcDevice">
@@ -26,6 +32,9 @@
         <ConfigUI>
             <Field id="egcSelection" type="label">
                 <Label>The single attached EGC device is selected automatically.</Label>
+            </Field>
+            <Field id="address" type="textfield" readonly="true">
+                <Label>Address:</Label>
             </Field>
         </ConfigUI>
         <States>
@@ -39,6 +48,46 @@
                 <TriggerLabel>Power consumption</TriggerLabel>
                 <ControlPageLabel>Power consumption</ControlPageLabel>
             </State>
+            <State id="moduleTemperature" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Module temperature</TriggerLabel>
+                <ControlPageLabel>Module temperature</ControlPageLabel>
+            </State>
+            <State id="pcbTemperature" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>PCB temperature</TriggerLabel>
+                <ControlPageLabel>PCB temperature</ControlPageLabel>
+            </State>
+            <State id="waterTemperature" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Water temperature</TriggerLabel>
+                <ControlPageLabel>Water temperature</ControlPageLabel>
+            </State>
+            <State id="manufacturerIdentifier" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Manufacturer identifier</TriggerLabel>
+                <ControlPageLabel>Manufacturer identifier</ControlPageLabel>
+            </State>
+            <State id="deviceIdentifier" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Device identifier</TriggerLabel>
+                <ControlPageLabel>Device identifier</ControlPageLabel>
+            </State>
+            <State id="uid" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Stable UID</TriggerLabel>
+                <ControlPageLabel>Stable UID</ControlPageLabel>
+            </State>
+            <State id="articleNumber" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Article number</TriggerLabel>
+                <ControlPageLabel>Article number</ControlPageLabel>
+            </State>
+            <State id="subdeviceCount" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Subdevice count</TriggerLabel>
+                <ControlPageLabel>Subdevice count</ControlPageLabel>
+            </State>
         </States>
     </Device>
     <Device type="sensor" id="controllerDevice">
@@ -46,6 +95,9 @@
         <ConfigUI>
             <Field id="controllerSelection" type="label">
                 <Label>This device represents the configured FM-Master controller.</Label>
+            </Field>
+            <Field id="address" type="textfield" readonly="true">
+                <Label>Address:</Label>
             </Field>
         </ConfigUI>
         <States>

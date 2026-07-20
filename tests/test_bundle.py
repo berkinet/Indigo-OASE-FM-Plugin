@@ -26,7 +26,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.3.2")
+        self.assertEqual(info["PluginVersion"], "0.4.0")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -39,7 +39,7 @@ class BundleTests(unittest.TestCase):
         self.assertFalse((SERVER / "requirements.txt").exists())
         self.assertEqual(
             hashlib.sha256(library.read_bytes()).hexdigest(),
-            "205db87d7a660ada1d7037452c1ef1e985e876b1eebe18e23ade5682b1adb141",
+            "8feb6b635de0d35199b0d82b549aa7f3d747dd2e1c1c87e58968786af06181d2",
         )
 
     def test_four_native_device_types(self):
@@ -64,12 +64,34 @@ class BundleTests(unittest.TestCase):
         options = switched.findall("./ConfigUI/Field/List/Option")
         self.assertEqual([option.attrib["value"] for option in options], ["1", "2", "4"])
 
-    def test_egc_device_exposes_rpm_and_watts_states(self):
+    def test_every_device_type_declares_read_only_address_field(self):
+        devices = ET.parse(SERVER / "Devices.xml").getroot()
+
+        for device in devices.findall("Device"):
+            address = device.find("./ConfigUI/Field[@id='address']")
+            self.assertIsNotNone(address, device.attrib["id"])
+            self.assertEqual(address.attrib["readonly"], "true")
+
+    def test_egc_device_exposes_telemetry_and_identity_states(self):
         devices = ET.parse(SERVER / "Devices.xml").getroot()
         egc = devices.find("Device[@id='egcDevice']")
         states = {state.attrib["id"] for state in egc.findall("./States/State")}
 
-        self.assertEqual(states, {"rpm", "watts"})
+        self.assertEqual(
+            states,
+            {
+                "rpm",
+                "watts",
+                "moduleTemperature",
+                "pcbTemperature",
+                "waterTemperature",
+                "manufacturerIdentifier",
+                "deviceIdentifier",
+                "uid",
+                "articleNumber",
+                "subdeviceCount",
+            },
+        )
 
     def test_controller_device_exposes_rssi_states(self):
         devices = ET.parse(SERVER / "Devices.xml").getroot()
