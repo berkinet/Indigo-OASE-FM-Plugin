@@ -41,4 +41,94 @@
             </State>
         </States>
     </Device>
+    <Device type="sensor" id="controllerDevice">
+        <Name>FM-Master controller</Name>
+        <ConfigUI>
+            <Field id="controllerSelection" type="label">
+                <Label>This device represents the configured FM-Master controller.</Label>
+            </Field>
+        </ConfigUI>
+        <States>
+            <State id="connected" readonly="true">
+                <ValueType>Boolean</ValueType>
+                <TriggerLabel>Connected</TriggerLabel>
+                <ControlPageLabel>Connected</ControlPageLabel>
+            </State>
+            <State id="authenticated" readonly="true">
+                <ValueType>Boolean</ValueType>
+                <TriggerLabel>Authenticated</TriggerLabel>
+                <ControlPageLabel>Authenticated</ControlPageLabel>
+            </State>
+            <State id="rssi" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Wi-Fi RSSI</TriggerLabel>
+                <ControlPageLabel>Wi-Fi RSSI</ControlPageLabel>
+            </State>
+            <State id="signalQuality" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Wi-Fi signal quality</TriggerLabel>
+                <ControlPageLabel>Wi-Fi signal quality</ControlPageLabel>
+            </State>
+            <State id="hardwareType" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Hardware type</TriggerLabel>
+                <ControlPageLabel>Hardware type</ControlPageLabel>
+            </State>
+            <State id="deviceIndex" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Device index</TriggerLabel>
+                <ControlPageLabel>Device index</ControlPageLabel>
+            </State>
+            <State id="controllerName" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Controller name</TriggerLabel>
+                <ControlPageLabel>Controller name</ControlPageLabel>
+            </State>
+            <State id="serialNumber" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Serial number</TriggerLabel>
+                <ControlPageLabel>Serial number</ControlPageLabel>
+            </State>
+            <State id="modelName" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Model name</TriggerLabel>
+                <ControlPageLabel>Model name</ControlPageLabel>
+            </State>
+            <State id="articleNumber" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Order/article number</TriggerLabel>
+                <ControlPageLabel>Order/article number</ControlPageLabel>
+            </State>
+            <State id="firmware" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Firmware</TriggerLabel>
+                <ControlPageLabel>Firmware</ControlPageLabel>
+            </State>
+            <State id="firmwareLow" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Firmware low</TriggerLabel>
+                <ControlPageLabel>Firmware low</ControlPageLabel>
+            </State>
+            <State id="firmwareHigh" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Firmware high</TriggerLabel>
+                <ControlPageLabel>Firmware high</ControlPageLabel>
+            </State>
+            <State id="wifiChannel" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Wi-Fi channel</TriggerLabel>
+                <ControlPageLabel>Wi-Fi channel</ControlPageLabel>
+            </State>
+            <State id="networkType" readonly="true">
+                <ValueType>Number</ValueType>
+                <TriggerLabel>Network type</TriggerLabel>
+                <ControlPageLabel>Network type</ControlPageLabel>
+            </State>
+            <State id="statusText" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Status text</TriggerLabel>
+                <ControlPageLabel>Status text</ControlPageLabel>
+            </State>
+        </States>
+    </Device>
 </Devices>

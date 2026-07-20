@@ -37,6 +37,17 @@ def egc_percent_to_raw(percent: int) -> int:
     return percent * 255 // 100
 
 
+def rssi_quality(rssi: int) -> str:
+    """Map RSSI to four labels using the thresholds in OASE's app library."""
+    if rssi <= -80:
+        return "Weak"
+    if rssi <= -68:
+        return "Fair"
+    if rssi <= -60:
+        return "Good"
+    return "Strong"
+
+
 def dimmer_state_updates(on: bool, brightness: int) -> list[dict[str, object]]:
     """Build Indigo updates with authoritative on/off state applied last.
 
