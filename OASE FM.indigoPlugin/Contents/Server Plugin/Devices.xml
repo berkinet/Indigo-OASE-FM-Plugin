@@ -161,20 +161,15 @@
                 <TriggerLabel>Order/article number</TriggerLabel>
                 <ControlPageLabel>Order/article number</ControlPageLabel>
             </State>
-            <State id="firmware" readonly="true">
+            <State id="release" readonly="true">
                 <ValueType>Number</ValueType>
-                <TriggerLabel>Firmware</TriggerLabel>
-                <ControlPageLabel>Firmware</ControlPageLabel>
+                <TriggerLabel>Release</TriggerLabel>
+                <ControlPageLabel>Release</ControlPageLabel>
             </State>
-            <State id="firmwareLow" readonly="true">
-                <ValueType>Number</ValueType>
-                <TriggerLabel>Firmware low</TriggerLabel>
-                <ControlPageLabel>Firmware low</ControlPageLabel>
-            </State>
-            <State id="firmwareHigh" readonly="true">
-                <ValueType>Number</ValueType>
-                <TriggerLabel>Firmware high</TriggerLabel>
-                <ControlPageLabel>Firmware high</ControlPageLabel>
+            <State id="firmwareVersion" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>Firmware version</TriggerLabel>
+                <ControlPageLabel>Firmware version</ControlPageLabel>
             </State>
             <State id="wifiChannel" readonly="true">
                 <ValueType>Number</ValueType>

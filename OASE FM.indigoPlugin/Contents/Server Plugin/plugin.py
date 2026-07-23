@@ -438,9 +438,14 @@ class Plugin(indigo.PluginBase):
                     {"key": "serialNumber", "value": discovery.serial_number},
                     {"key": "modelName", "value": discovery.long_name},
                     {"key": "articleNumber", "value": discovery.order_number},
-                    {"key": "firmware", "value": discovery.firmware},
-                    {"key": "firmwareLow", "value": discovery.firmware_low},
-                    {"key": "firmwareHigh", "value": discovery.firmware_high},
+                    {"key": "release", "value": discovery.firmware},
+                    {
+                        "key": "firmwareVersion",
+                        "value": (
+                            f"{discovery.firmware_high}."
+                            f"{discovery.firmware_low}"
+                        ),
+                    },
                     {"key": "wifiChannel", "value": discovery.wifi_channel},
                     {"key": "networkType", "value": discovery.network_type},
                     {"key": "statusText", "value": discovery.status},
