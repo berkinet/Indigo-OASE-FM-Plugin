@@ -82,9 +82,9 @@ physical socket 3 is dimmable.
   Fair, Good, or Strong using the thresholds found in OASE's app library.
 - The controller Sensor also exposes the discovery data currently understood:
   hardware type, device index, controller and model names, serial and article
-  numbers, three firmware values, Wi-Fi channel, network type, and controller
-  status text. `connected` and `authenticated` are determined locally by the
-  plugin rather than reported discovery fields.
+  numbers, release, combined firmware version, Wi-Fi channel, network type,
+  and controller status text. `connected` and `authenticated` are determined
+  locally by the plugin rather than reported discovery fields.
 - Connections are reused and automatically reset after communication errors.
 - A controller outage logs one warning and marks the devices unavailable.
   Continued polling failures remain quiet until a successful refresh logs that
