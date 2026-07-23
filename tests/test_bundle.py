@@ -26,7 +26,7 @@ class BundleTests(unittest.TestCase):
             info = plistlib.load(stream)
 
         self.assertEqual(info["ServerApiVersion"], "3.8")
-        self.assertEqual(info["PluginVersion"], "0.4.0")
+        self.assertEqual(info["PluginVersion"], "0.4.1")
         self.assertEqual(
             info["CFBundleIdentifier"],
             "com.berkinet.indigoplugin.oase-fm",
@@ -39,7 +39,7 @@ class BundleTests(unittest.TestCase):
         self.assertFalse((SERVER / "requirements.txt").exists())
         self.assertEqual(
             hashlib.sha256(library.read_bytes()).hexdigest(),
-            "8feb6b635de0d35199b0d82b549aa7f3d747dd2e1c1c87e58968786af06181d2",
+            "938582f5d44ba79426f6a468144b0e2560d487583290041b0a28bee2d4b9d447",
         )
 
     def test_four_native_device_types(self):
@@ -85,6 +85,8 @@ class BundleTests(unittest.TestCase):
                 "moduleTemperature",
                 "pcbTemperature",
                 "waterTemperature",
+                "sfcEnabled",
+                "sfcMode",
                 "manufacturerIdentifier",
                 "deviceIdentifier",
                 "uid",

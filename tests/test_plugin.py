@@ -268,6 +268,8 @@ class PluginLogicTests(unittest.TestCase):
             module_temperature=24,
             pcb_temperature=31,
             water_temperature=18,
+            sfc_enabled=False,
+            sfc_mode="Maximum",
         )
         try:
             refreshed = self.plugin._refresh_all()
@@ -296,6 +298,8 @@ class PluginLogicTests(unittest.TestCase):
                     "value": 18,
                     "uiValue": "18 °C",
                 },
+                {"key": "sfcEnabled", "value": False},
+                {"key": "sfcMode", "value": "Maximum"},
                 {"key": "manufacturerIdentifier", "value": 0x4F41},
                 {"key": "deviceIdentifier", "value": 456},
                 {"key": "uid", "value": "4F41:000001C8"},
