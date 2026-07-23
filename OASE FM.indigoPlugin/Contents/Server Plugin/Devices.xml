@@ -63,6 +63,16 @@
                 <TriggerLabel>Water temperature</TriggerLabel>
                 <ControlPageLabel>Water temperature</ControlPageLabel>
             </State>
+            <State id="sfcEnabled" readonly="true">
+                <ValueType>Boolean</ValueType>
+                <TriggerLabel>SFC enabled</TriggerLabel>
+                <ControlPageLabel>SFC enabled</ControlPageLabel>
+            </State>
+            <State id="sfcMode" readonly="true">
+                <ValueType>String</ValueType>
+                <TriggerLabel>SFC mode</TriggerLabel>
+                <ControlPageLabel>SFC mode</ControlPageLabel>
+            </State>
             <State id="manufacturerIdentifier" readonly="true">
                 <ValueType>Number</ValueType>
                 <TriggerLabel>Manufacturer identifier</TriggerLabel>

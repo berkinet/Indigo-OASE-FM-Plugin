@@ -511,6 +511,12 @@ class Plugin(indigo.PluginBase):
                             "uiValue": f"{value:g} °C",
                         }
                     )
+            sfc_enabled = getattr(egc_state, "sfc_enabled", None)
+            if sfc_enabled is not None:
+                updates.append({"key": "sfcEnabled", "value": sfc_enabled})
+            sfc_mode = getattr(egc_state, "sfc_mode", None)
+            if sfc_mode is not None:
+                updates.append({"key": "sfcMode", "value": sfc_mode})
             egc = egc_state.device
             updates.extend(
                 [

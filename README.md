@@ -2,8 +2,8 @@
 
 An Indigo 2025.2 plugin for local control of the OASE InScenio FM-Master EGC
 and one attached EGC device, including controller Wi-Fi signal strength and
-live RPM, wattage, and temperature telemetry when the EGC device exposes those
-standard RDM sensors.
+live RPM, wattage, temperature, and Seasonal Flow Control (SFC) telemetry when
+the EGC device exposes those standard RDM values.
 
 The plugin bundles the reusable
 [`oase-fm`](https://github.com/berkinet/oase-fm) Python module for the OASE
@@ -71,6 +71,10 @@ physical socket 3 is dimmable.
 - EGC module, PCB, and water temperatures are exposed in degrees Celsius when
   the device advertises OASE's `Temp Modul`, `Temp_PCB`, and `Temp Water`
   sensors.
+- EGC Seasonal Flow Control is reported through the read-only `sfcEnabled` and
+  `sfcMode` states. The mode is `Maximum`, `Medium`, or `Minimum` when the
+  device reports OASE's `SFCFunction` sensor. The plugin does not enable,
+  disable, or otherwise control SFC.
 - The EGC device also exposes its manufacturer identifier, device identifier,
   stable combined UID, article number, and subdevice count as read-only states.
 - The optional FM-Master controller Sensor reports raw Wi-Fi RSSI in dBm as its
